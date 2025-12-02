@@ -118,26 +118,15 @@ class JobProcessor:
             # Step 8: Finalize
             await self.update_job_status(job_id, "processing", "Finalizing...", 95)
 
-            result = {
+            # Store lightweight summary in job (without images to avoid size limit)
+            result_summary = {
                 "job_id": job_id,
                 "pages": len(pages_data),
-                "articles": [
-                    {
-                        "article_id": art["article_id"],
-                        "page": art["page"],
-                        "title": art["title"],
-                        "content": art["content"],
-                        "keywords": art["keywords"],
-                        "hashtags": art["hashtags"],
-                        "related_articles": art["related_articles"],
-                        "crop_image_base64": art["crop_image_base64"]
-                    }
-                    for art in all_articles
-                ],
+                "article_count": len(all_articles),
                 "keywords_summary": keywords_summary
             }
 
-            # Update job with result
+            # Update job with lightweight summary
             await db.jobs.update_one(
                 {"job_id": job_id},
                 {
@@ -145,7 +134,7 @@ class JobProcessor:
                         "status": "completed",
                         "step": "Completed",
                         "progress": 100,
-                        "result": result,
+                        "result": result_summary,
                         "updated_at": datetime.utcnow()
                     }
                 }

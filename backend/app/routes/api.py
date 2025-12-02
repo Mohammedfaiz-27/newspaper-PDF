@@ -113,7 +113,35 @@ async def get_job_result(job_id: str):
     if not job.get("result"):
         raise HTTPException(status_code=500, detail="No result available")
 
-    return ProcessResult(**job["result"])
+    # Fetch articles from articles collection (avoids MongoDB size limit)
+    articles_cursor = db.articles.find({"job_id": job_id})
+    articles = await articles_cursor.to_list(length=1000)
+
+    # Convert MongoDB documents to Article objects
+    article_list = [
+        Article(
+            article_id=art["article_id"],
+            page=art["page"],
+            title=art["title"],
+            content=art["content"],
+            keywords=art.get("keywords", []),
+            hashtags=art.get("hashtags", []),
+            crop_image_base64=art.get("crop_image_base64", ""),
+            related_articles=art.get("related_articles", []),
+            created_at=art.get("created_at", datetime.utcnow())
+        )
+        for art in articles
+    ]
+
+    # Build result from job summary and fetched articles
+    result = ProcessResult(
+        job_id=job_id,
+        pages=job["result"].get("pages", 0),
+        articles=article_list,
+        keywords_summary=job["result"].get("keywords_summary", [])
+    )
+
+    return result
 
 
 @router.post("/search", response_model=List[SearchResult])

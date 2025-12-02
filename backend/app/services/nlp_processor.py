@@ -9,7 +9,7 @@ from collections import Counter
 
 
 class NLPProcessor:
-    def __init__(self):
+    def __init__(self, use_fast_mode=True):
         # Load spaCy model (download with: python -m spacy download en_core_web_sm)
         try:
             self.nlp = spacy.load("en_core_web_sm")
@@ -19,52 +19,74 @@ class NLPProcessor:
             subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
             self.nlp = spacy.load("en_core_web_sm")
 
-        # Load KeyBERT for keyword extraction
-        self.kw_model = KeyBERT()
+        self.use_fast_mode = use_fast_mode
+
+        # Load KeyBERT only if not in fast mode
+        if not use_fast_mode:
+            self.kw_model = KeyBERT()
+        else:
+            self.kw_model = None
 
         # Load sentence transformer for embeddings
         self.embedder = SentenceTransformer('all-MiniLM-L6-v2')
 
     def extract_keywords(self, text: str, top_n: int = 10) -> List[str]:
-        """Extract keywords using KeyBERT"""
+        """Extract keywords - uses fast spaCy mode by default"""
         if not text or len(text.strip()) < 20:
             return []
 
+        # OPTIMIZATION: Limit text length to first 1000 characters for speed
+        # Most important keywords are usually in the beginning of articles
+        text_sample = text[:1000]
+
+        # Use fast spaCy-based extraction by default
+        if self.use_fast_mode or not self.kw_model:
+            return self._extract_keywords_spacy(text_sample, top_n)
+
+        # Use slower but more accurate KeyBERT if not in fast mode
         try:
-            # Use KeyBERT to extract keywords
             keywords = self.kw_model.extract_keywords(
-                text,
+                text_sample,
                 keyphrase_ngram_range=(1, 2),
                 stop_words='english',
                 top_n=top_n,
                 use_maxsum=True,
-                nr_candidates=20
+                nr_candidates=10,
+                diversity=0.5
             )
-
-            # Return just the keyword strings
             return [kw[0] for kw in keywords]
         except Exception as e:
             print(f"KeyBERT extraction failed: {e}, falling back to spaCy")
-            return self._extract_keywords_spacy(text, top_n)
+            return self._extract_keywords_spacy(text_sample, top_n)
 
     def _extract_keywords_spacy(self, text: str, top_n: int = 10) -> List[str]:
-        """Fallback keyword extraction using spaCy"""
-        doc = self.nlp(text[:100000])  # Limit text length
+        """Fast keyword extraction using spaCy (optimized for speed)"""
+        # Limit to first 2000 chars for speed (already limited to 1000 in caller)
+        doc = self.nlp(text[:2000])
 
         # Extract named entities and noun chunks
         keywords = []
 
-        # Named entities
+        # Named entities (most important keywords)
         for ent in doc.ents:
-            if ent.label_ in ["PERSON", "ORG", "GPE", "EVENT", "PRODUCT"]:
-                keywords.append(ent.text.lower())
+            if ent.label_ in ["PERSON", "ORG", "GPE", "EVENT", "PRODUCT", "WORK_OF_ART", "LAW"]:
+                clean_text = ent.text.lower().strip()
+                if len(clean_text) > 2:  # Skip very short entities
+                    keywords.append(clean_text)
 
-        # Noun chunks
+        # Important noun chunks (limit to 2 words max for relevance)
         for chunk in doc.noun_chunks:
-            if len(chunk.text.split()) <= 2:  # Max 2 words
-                keywords.append(chunk.text.lower())
+            words = chunk.text.split()
+            if 1 <= len(words) <= 2:
+                clean_text = chunk.text.lower().strip()
+                # Filter out very common words
+                if len(clean_text) > 3 and clean_text not in ['the', 'this', 'that', 'these', 'those']:
+                    keywords.append(clean_text)
 
-        # Count and return most frequent
+        # Count and return most frequent (deduplicated)
+        if not keywords:
+            return []
+
         counter = Counter(keywords)
         return [kw for kw, count in counter.most_common(top_n)]
 

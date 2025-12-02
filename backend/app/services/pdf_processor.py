@@ -186,9 +186,22 @@ class PDFProcessor:
         try:
             cropped = page_img.crop(crop_box)
 
-            # Convert to base64
+            # OPTIMIZATION: Resize if too large to reduce Base64 size
+            max_width = 800  # Max width in pixels
+            if cropped.width > max_width:
+                ratio = max_width / cropped.width
+                new_size = (max_width, int(cropped.height * ratio))
+                cropped = cropped.resize(new_size, Image.LANCZOS)
+
+            # Convert to base64 using JPEG for smaller size
             buffer = io.BytesIO()
-            cropped.save(buffer, format="PNG", optimize=True, quality=85)
+            # Convert RGBA to RGB if needed (JPEG doesn't support transparency)
+            if cropped.mode == 'RGBA':
+                rgb_img = Image.new('RGB', cropped.size, (255, 255, 255))
+                rgb_img.paste(cropped, mask=cropped.split()[3])
+                cropped = rgb_img
+
+            cropped.save(buffer, format="JPEG", optimize=True, quality=60)
             img_str = base64.b64encode(buffer.getvalue()).decode()
 
             return img_str
