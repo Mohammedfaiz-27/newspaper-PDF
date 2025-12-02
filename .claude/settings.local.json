@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(if not exist .env copy .env.example .env)",
+      "Bash(python run.py:*)",
+      "Bash(py run.py:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
