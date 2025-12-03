@@ -68,69 +68,65 @@ class JobProcessor:
                 # Update article_id to be unique across all jobs
                 article["article_id"] = f"{job_id}_{i + 1}"
 
-            # Step 4: Enhance content with Gemini (if enabled)
-            if self.gemini_processor.enabled:
-                await self.update_job_status(job_id, "processing", "Enhancing content with AI...", 40)
+            # Step 4: OPTIMIZED - Enhance with AI (parallel processing)
+            await self.update_job_status(job_id, "processing", "Enhancing with AI...", 40)
 
-                for i, article in enumerate(all_articles):
-                    # Improve title if needed
-                    improved_title = self.gemini_processor.improve_article_title(
+            async def enhance_single_article(article, index):
+                """Process a single article with AI (runs in parallel)"""
+                if self.gemini_processor.enabled:
+                    # ONE API call instead of 3!
+                    result = await asyncio.to_thread(
+                        self.gemini_processor.enhance_article_fast,
                         article["content"],
                         article["title"]
                     )
-                    article["title"] = improved_title
 
-                    # Generate clean summary for preview
-                    summary = self.gemini_processor.generate_article_summary(
-                        article["content"],
-                        article["title"],
-                        max_length=200
-                    )
-                    article["summary"] = summary
+                    # Apply AI enhancements
+                    article["title"] = result["title"]
+                    article["summary"] = result["summary"]
 
-                    # Update progress
-                    if i % 3 == 0:
-                        await self.update_job_status(
-                            job_id, "processing",
-                            f"AI enhancement ({i + 1}/{len(all_articles)})...",
-                            40 + int((i / len(all_articles)) * 10)
-                        )
-
-            # Step 5: Extract keywords with AI
-            await self.update_job_status(job_id, "processing", "Extracting keywords...", 50)
-
-            for i, article in enumerate(all_articles):
-                # Try Gemini first, fallback to spaCy/KeyBERT
-                if self.gemini_processor.enabled:
-                    keywords = self.gemini_processor.extract_keywords_with_ai(article["content"])
-                    if not keywords:  # Fallback if Gemini fails
-                        keywords = self.nlp_processor.extract_keywords(article["content"])
+                    # Use AI keywords, fallback to spaCy if empty
+                    if result["keywords"]:
+                        article["keywords"] = result["keywords"]
+                    else:
+                        article["keywords"] = self.nlp_processor.extract_keywords(article["content"])
                 else:
-                    keywords = self.nlp_processor.extract_keywords(article["content"])
+                    # No AI - use spaCy/KeyBERT
+                    article["summary"] = article["content"][:200] + "..."
+                    article["keywords"] = self.nlp_processor.extract_keywords(article["content"])
 
-                article["keywords"] = keywords
+                # Generate hashtags
+                article["hashtags"] = self.nlp_processor.generate_hashtags(article["keywords"])
 
-                hashtags = self.nlp_processor.generate_hashtags(keywords)
-                article["hashtags"] = hashtags
+                return article
+
+            # Process articles in parallel batches of 10
+            batch_size = 10
+            for batch_start in range(0, len(all_articles), batch_size):
+                batch_end = min(batch_start + batch_size, len(all_articles))
+                batch = all_articles[batch_start:batch_end]
+
+                # Process batch in parallel
+                tasks = [enhance_single_article(article, i) for i, article in enumerate(batch)]
+                await asyncio.gather(*tasks)
 
                 # Update progress
-                progress = 50 + int((i / len(all_articles)) * 20)
-                if i % 5 == 0:  # Update every 5 articles
-                    await self.update_job_status(
-                        job_id, "processing",
-                        f"Extracting keywords ({i + 1}/{len(all_articles)})...",
-                        progress
-                    )
+                progress = 40 + int((batch_end / len(all_articles)) * 30)
+                await self.update_job_status(
+                    job_id, "processing",
+                    f"AI enhancement ({batch_end}/{len(all_articles)})...",
+                    progress
+                )
 
             # Step 5: Compute related articles
-            await self.update_job_status(job_id, "processing", "Computing related articles...", 70)
+            await self.update_job_status(job_id, "processing", "Computing related articles...", 75)
             related_map = self.nlp_processor.find_related_articles(all_articles)
 
             for article in all_articles:
                 article["related_articles"] = related_map.get(article["article_id"], [])
 
             # Step 6: Generate keywords summary
-            await self.update_job_status(job_id, "processing", "Generating summary...", 80)
+            await self.update_job_status(job_id, "processing", "Generating summary...", 85)
             all_keywords = []
             for article in all_articles:
                 all_keywords.extend(article["keywords"])

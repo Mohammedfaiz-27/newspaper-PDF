@@ -200,6 +200,81 @@ Cleaned article:"""
             print(f"Gemini content enhancement failed: {e}")
             return text
 
+    def enhance_article_fast(self, text: str, original_title: str, top_keywords: int = 10) -> Dict:
+        """
+        OPTIMIZED: Get title, summary, and keywords in ONE API call
+        Returns: {"title": str, "summary": str, "keywords": List[str]}
+        """
+        if not self.enabled or not text or len(text.strip()) < 50:
+            return {
+                "title": original_title,
+                "summary": text[:200] + "...",
+                "keywords": []
+            }
+
+        try:
+            prompt = f"""Analyze this news article and provide:
+1. An improved headline (if the current one is unclear/incomplete)
+2. A professional 200-character summary
+3. The {top_keywords} most important keywords
+
+Current headline: {original_title}
+
+Article text:
+{text[:3000]}
+
+IMPORTANT: Return ONLY valid JSON in this exact format:
+{{
+  "title": "Improved Headline Here",
+  "summary": "Professional summary in 200 characters...",
+  "keywords": ["keyword1", "keyword2", "keyword3"]
+}}
+
+Rules:
+- Title: Clear, 5-15 words, title case, no clickbait
+- Summary: Exactly 200 characters max, professional news style
+- Keywords: 1-3 words each, lowercase, focus on main topics/entities
+- Return ONLY the JSON object, nothing else"""
+
+            response = self.model.generate_content(prompt)
+            result_text = response.text.strip()
+
+            # Extract JSON from response
+            match = re.search(r'\{.*\}', result_text, re.DOTALL)
+            if match:
+                result = json.loads(match.group())
+
+                # Validate and clean results
+                title = result.get("title", original_title)
+                if len(title) < 10 or len(title) > 150:
+                    title = original_title
+
+                summary = result.get("summary", text[:200] + "...")
+                if len(summary) > 250:
+                    summary = summary[:200].rsplit(' ', 1)[0] + "..."
+
+                keywords = result.get("keywords", [])[:top_keywords]
+
+                return {
+                    "title": title,
+                    "summary": summary,
+                    "keywords": keywords
+                }
+
+            return {
+                "title": original_title,
+                "summary": text[:200] + "...",
+                "keywords": []
+            }
+
+        except Exception as e:
+            print(f"Gemini fast enhancement failed: {e}")
+            return {
+                "title": original_title,
+                "summary": text[:200] + "...",
+                "keywords": []
+            }
+
     def analyze_article_relevance(self, articles: List[Dict], keyword: str) -> List[Dict]:
         """Use Gemini to rank articles by relevance to a keyword"""
         if not self.enabled or not articles:
