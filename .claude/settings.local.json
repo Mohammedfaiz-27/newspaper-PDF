@@ -4,7 +4,10 @@
       "Bash(mkdir:*)",
       "Bash(if not exist .env copy .env.example .env)",
       "Bash(python run.py:*)",
-      "Bash(py run.py:*)"
+      "Bash(py run.py:*)",
+      "Bash(if [ -f .env ])",
+      "Bash(then echo \"GEMINI_API_KEY=your_gemini_api_key_here\")",
+      "Bash(fi)"
     ],
     "deny": [],
     "ask": []

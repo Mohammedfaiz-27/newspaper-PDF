@@ -8,6 +8,7 @@ class Article(BaseModel):
     page: int
     title: str
     content: str
+    summary: str = ""  # AI-generated summary
     keywords: List[str] = []
     hashtags: List[str] = []
     crop_image_base64: str = ""

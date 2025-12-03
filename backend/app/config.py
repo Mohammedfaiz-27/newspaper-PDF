@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     TEMP_DIR: str = "./temp"
     MAX_FILE_SIZE: int = 52428800  # 50MB
     CORS_ORIGINS: Union[List[str], str] = ["http://localhost:3000", "http://localhost:5173"]
+    GEMINI_API_KEY: str = ""
+    USE_GEMINI: bool = True
 
     @field_validator('CORS_ORIGINS', mode='before')
     @classmethod

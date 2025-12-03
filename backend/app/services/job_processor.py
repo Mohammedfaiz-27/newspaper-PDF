@@ -7,12 +7,15 @@ import os
 
 from app.services.pdf_processor import PDFProcessor
 from app.services.nlp_processor import NLPProcessor
+from app.services.gemini_processor import GeminiProcessor
 from app.models.database import get_database
+from app.config import settings
 
 
 class JobProcessor:
     def __init__(self):
         self.nlp_processor = NLPProcessor()
+        self.gemini_processor = GeminiProcessor()
 
     async def update_job_status(self, job_id: str, status: str, step: str, progress: int, error: str = None):
         """Update job status in database"""
@@ -65,11 +68,46 @@ class JobProcessor:
                 # Update article_id to be unique across all jobs
                 article["article_id"] = f"{job_id}_{i + 1}"
 
-            # Step 4: Extract keywords
+            # Step 4: Enhance content with Gemini (if enabled)
+            if self.gemini_processor.enabled:
+                await self.update_job_status(job_id, "processing", "Enhancing content with AI...", 40)
+
+                for i, article in enumerate(all_articles):
+                    # Improve title if needed
+                    improved_title = self.gemini_processor.improve_article_title(
+                        article["content"],
+                        article["title"]
+                    )
+                    article["title"] = improved_title
+
+                    # Generate clean summary for preview
+                    summary = self.gemini_processor.generate_article_summary(
+                        article["content"],
+                        article["title"],
+                        max_length=200
+                    )
+                    article["summary"] = summary
+
+                    # Update progress
+                    if i % 3 == 0:
+                        await self.update_job_status(
+                            job_id, "processing",
+                            f"AI enhancement ({i + 1}/{len(all_articles)})...",
+                            40 + int((i / len(all_articles)) * 10)
+                        )
+
+            # Step 5: Extract keywords with AI
             await self.update_job_status(job_id, "processing", "Extracting keywords...", 50)
 
             for i, article in enumerate(all_articles):
-                keywords = self.nlp_processor.extract_keywords(article["content"])
+                # Try Gemini first, fallback to spaCy/KeyBERT
+                if self.gemini_processor.enabled:
+                    keywords = self.gemini_processor.extract_keywords_with_ai(article["content"])
+                    if not keywords:  # Fallback if Gemini fails
+                        keywords = self.nlp_processor.extract_keywords(article["content"])
+                else:
+                    keywords = self.nlp_processor.extract_keywords(article["content"])
+
                 article["keywords"] = keywords
 
                 hashtags = self.nlp_processor.generate_hashtags(keywords)
