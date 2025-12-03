@@ -1,45 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    /* Colors - HSL format */
-    --primary: 200 95% 45%;
+    /* Primary Teal - HSL 175 45% 40% */
+    --primary: 175 45% 40%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 240 10% 15%;
+    --secondary: 40 20% 96%;
+    --secondary-foreground: 0 0% 20%;
 
-    --background: 0 0% 100%;
-    --foreground: 240 10% 15%;
+    /* Warm off-white background - HSL 40 20% 98% */
+    --background: 40 20% 98%;
+    --foreground: 0 0% 20%;
 
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 15%;
+    --card-foreground: 0 0% 20%;
 
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 200 95% 45%;
+    --border: 0 0% 88%;
+    --input: 0 0% 92%;
+    --ring: 175 45% 40%;
 
-    /* Neutral scale */
-    --neutral-50: 240 5% 98%;
-    --neutral-100: 240 5% 96%;
-    --neutral-200: 240 6% 90%;
-    --neutral-300: 240 5% 84%;
-    --neutral-400: 240 5% 65%;
-    --neutral-500: 240 4% 46%;
-    --neutral-600: 240 5% 34%;
-    --neutral-700: 240 5% 26%;
-    --neutral-800: 240 5% 18%;
-    --neutral-900: 240 6% 10%;
+    /* Neutral grays */
+    --neutral-50: 0 0% 98%;
+    --neutral-100: 0 0% 96%;
+    --neutral-200: 0 0% 90%;
+    --neutral-300: 0 0% 82%;
+    --neutral-400: 0 0% 64%;
+    --neutral-500: 0 0% 46%;
+    --neutral-600: 0 0% 36%;
+    --neutral-700: 0 0% 28%;
+    --neutral-800: 0 0% 20%;
+    --neutral-900: 0 0% 12%;
 
-    /* Teal variants */
-    --teal-light: 180 60% 85%;
-    --teal-medium: 180 70% 55%;
-    --teal-dark: 180 80% 35%;
+    /* Teal scale - based on HSL 175 45% 40% */
+    --teal-light: 175 45% 85%;
+    --teal-medium: 175 45% 55%;
+    --teal-dark: 175 45% 30%;
 
-    /* Shadows */
-    --shadow-card: 0 2px 8px -2px rgba(0, 0, 0, 0.08);
-    --shadow-lifted: 0 8px 24px -4px rgba(0, 0, 0, 0.12);
+    /* Soft shadows */
+    --shadow-card: 0 2px 8px -2px rgba(0, 0, 0, 0.06), 0 1px 4px -1px rgba(0, 0, 0, 0.04);
+    --shadow-lifted: 0 8px 24px -4px rgba(0, 0, 0, 0.10), 0 4px 8px -2px rgba(0, 0, 0, 0.06);
   }
 }
 

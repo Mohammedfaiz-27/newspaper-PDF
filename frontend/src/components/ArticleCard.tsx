@@ -1,5 +1,5 @@
-import { FileText } from "lucide-react";
-import { KeywordChip } from "./KeywordChip";
+import { motion } from "framer-motion";
+import { Eye } from "lucide-react";
 import type { Article } from "../types";
 import { cn } from "../lib/utils";
 
@@ -14,12 +14,13 @@ export function ArticleCard({ article, onKeywordClick, onArticleClick, index }: 
   const snippet = article.content.substring(0, 150) + "...";
 
   return (
-    <div
-      className="group bg-card rounded-lg shadow-card hover:shadow-lifted transition-all duration-300 overflow-hidden hover:-translate-y-1 animate-slide-up cursor-pointer"
-      style={{
-        animationDelay: `${index * 50}ms`,
-      }}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: index * 0.05 }}
+      whileHover={{ y: -4 }}
       onClick={() => onArticleClick(article)}
+      className="group bg-card rounded-xl shadow-card hover:shadow-lifted transition-all duration-300 overflow-hidden cursor-pointer border border-border"
     >
       {/* Thumbnail */}
       {article.crop_image_base64 && (
@@ -27,10 +28,17 @@ export function ArticleCard({ article, onKeywordClick, onArticleClick, index }: 
           <img
             src={`data:image/jpeg;base64,${article.crop_image_base64}`}
             alt={article.title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
-          <div className="absolute top-3 right-3 px-2.5 py-1 bg-primary text-primary-foreground text-xs font-semibold rounded-full shadow-sm">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="absolute top-3 right-3 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-semibold rounded-full shadow-sm">
             Page {article.page}
+          </div>
+          {/* View Icon on Hover */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="bg-white rounded-full p-3 shadow-lifted">
+              <Eye className="w-5 h-5 text-primary" />
+            </div>
           </div>
         </div>
       )}
@@ -38,47 +46,51 @@ export function ArticleCard({ article, onKeywordClick, onArticleClick, index }: 
       {/* Content */}
       <div className="p-6 space-y-4">
         <div>
-          <h3 className="text-xl font-serif font-semibold text-foreground line-clamp-2 mb-2">
+          <h3 className="text-xl font-serif font-semibold text-foreground line-clamp-2 mb-2 group-hover:text-primary transition-colors duration-300">
             {article.title}
           </h3>
-          <p className="text-sm text-neutral-600 line-clamp-3">{snippet}</p>
+          <p className="text-sm text-neutral-600 line-clamp-3 leading-relaxed">{snippet}</p>
         </div>
 
         {/* Keywords */}
         {article.keywords && article.keywords.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {article.keywords.slice(0, 4).map((keyword, idx) => (
-              <button
+              <motion.button
                 key={idx}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={(e) => {
-                  e.stopPropagation(); // Prevent card click
+                  e.stopPropagation();
                   onKeywordClick(keyword);
                 }}
                 className={cn(
-                  "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium",
-                  "bg-teal-light text-teal-dark",
-                  "hover:bg-teal-medium hover:text-white transition-all duration-200",
+                  "inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium",
+                  "bg-primary/10 text-primary border border-primary/20",
+                  "hover:bg-primary hover:text-white transition-all duration-300",
                   "hover:shadow-sm"
                 )}
               >
                 {keyword}
-              </button>
+              </motion.button>
             ))}
             {article.keywords.length > 4 && (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-neutral-100 text-neutral-600">
-                +{article.keywords.length - 4} more
+              <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-600 border border-neutral-200">
+                +{article.keywords.length - 4}
               </span>
             )}
           </div>
         )}
 
-        {/* Read More Hint */}
-        <div className="pt-2 mt-2 border-t border-neutral-200 opacity-0 group-hover:opacity-100 transition-opacity">
-          <p className="text-sm text-primary font-medium">
-            Click to read full article →
-          </p>
-        </div>
+        {/* Hashtags */}
+        {article.hashtags && article.hashtags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 text-xs text-neutral-500">
+            {article.hashtags.slice(0, 3).map((tag, idx) => (
+              <span key={idx}>{tag}</span>
+            ))}
+          </div>
+        )}
       </div>
-    </div>
+    </motion.div>
   );
 }

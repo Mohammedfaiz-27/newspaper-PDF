@@ -44,11 +44,18 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
-        serif: ['Newsreader', 'serif'],
+        serif: ['Playfair Display', 'serif'],
+      },
+      borderRadius: {
+        'xl': '0.75rem',
+        '2xl': '1rem',
       },
       boxShadow: {
         card: 'var(--shadow-card)',
         lifted: 'var(--shadow-lifted)',
+      },
+      transitionTimingFunction: {
+        'editorial': 'cubic-bezier(0.4, 0, 0.2, 1)',
       },
       animation: {
         'fade-in': 'fade-in 0.4s ease-out',

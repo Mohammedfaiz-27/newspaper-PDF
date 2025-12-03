@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Search, X } from "lucide-react";
 import { cn } from "../lib/utils";
 
@@ -21,15 +22,22 @@ export function SearchBar({
 
   return (
     <div className="relative">
-      <div
+      <motion.div
+        animate={isFocused ? { scale: 1.01 } : { scale: 1 }}
+        transition={{ duration: 0.2 }}
         className={cn(
-          "flex items-center border rounded-xl bg-background transition-all duration-200",
+          "flex items-center border rounded-xl bg-white transition-all duration-300",
           isFocused
-            ? "shadow-lifted ring-2 ring-primary/20 scale-[1.02] border-primary"
-            : "shadow-card border-input hover:shadow-lifted"
+            ? "shadow-lifted ring-2 ring-primary/20 border-primary"
+            : "shadow-card border-border hover:border-neutral-400"
         )}
       >
-        <Search className="w-5 h-5 text-neutral-400 ml-4" />
+        <Search
+          className={cn(
+            "w-5 h-5 ml-4 transition-colors duration-300",
+            isFocused ? "text-primary" : "text-neutral-400"
+          )}
+        />
         <input
           type="text"
           value={value}
@@ -37,17 +45,23 @@ export function SearchBar({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           placeholder={placeholder}
-          className="flex-1 px-4 py-4 text-base bg-transparent outline-none placeholder:text-neutral-400"
+          className="flex-1 px-4 py-4 text-base bg-transparent outline-none placeholder:text-neutral-400 text-foreground"
         />
-        {value && (
-          <button
-            onClick={handleClear}
-            className="mr-4 p-1.5 hover:bg-neutral-100 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5 text-neutral-400" />
-          </button>
-        )}
-      </div>
+        <AnimatePresence>
+          {value && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.2 }}
+              onClick={handleClear}
+              className="mr-4 p-1.5 hover:bg-neutral-100 rounded-lg transition-colors duration-200"
+            >
+              <X className="w-5 h-5 text-neutral-400 hover:text-neutral-600" />
+            </motion.button>
+          )}
+        </AnimatePresence>
+      </motion.div>
     </div>
   );
 }

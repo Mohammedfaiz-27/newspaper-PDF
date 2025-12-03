@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
-import { Upload, FileText } from "lucide-react";
+import { Upload, FileText, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "../lib/utils";
 
 interface UploadZoneProps {
@@ -64,13 +65,18 @@ export function UploadZone({ onFileSelect, isProcessing }: UploadZoneProps) {
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto animate-fade-in-scale">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4 }}
+      className="w-full max-w-2xl mx-auto"
+    >
       <div
         className={cn(
-          "relative border-2 border-dashed rounded-xl p-16 text-center transition-all cursor-pointer group",
+          "relative border-2 border-dashed rounded-xl p-12 md:p-16 text-center transition-all duration-300 cursor-pointer group",
           dragActive
-            ? "border-primary bg-teal-light/30 shadow-lifted"
-            : "border-neutral-300 hover:border-primary/50 hover:shadow-lifted hover:bg-neutral-50",
+            ? "border-primary bg-primary/5 shadow-lifted"
+            : "border-neutral-300 hover:border-primary/50 hover:shadow-card hover:bg-white",
           isProcessing && "opacity-50 pointer-events-none"
         )}
         onDragEnter={handleDrag}
@@ -89,9 +95,11 @@ export function UploadZone({ onFileSelect, isProcessing }: UploadZoneProps) {
         />
 
         <div className="flex flex-col items-center space-y-6">
-          <div
+          <motion.div
+            animate={dragActive ? { scale: 1.1 } : { scale: 1 }}
+            transition={{ duration: 0.2 }}
             className={cn(
-              "p-6 rounded-full transition-colors",
+              "p-6 rounded-full transition-colors duration-300",
               dragActive
                 ? "bg-primary/10"
                 : "bg-neutral-100 group-hover:bg-primary/10"
@@ -99,46 +107,76 @@ export function UploadZone({ onFileSelect, isProcessing }: UploadZoneProps) {
           >
             <Upload
               className={cn(
-                "w-16 h-16 transition-colors",
+                "w-12 h-12 md:w-16 md:h-16 transition-colors duration-300",
                 dragActive
                   ? "text-primary"
                   : "text-neutral-400 group-hover:text-primary"
               )}
             />
-          </div>
+          </motion.div>
 
-          {selectedFile ? (
-            <div className="flex items-center space-x-3 text-primary animate-fade-in">
-              <FileText className="w-6 h-6" />
-              <div className="text-left">
-                <p className="font-medium text-lg">{selectedFile.name}</p>
-                <p className="text-sm text-neutral-500">
-                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+          <AnimatePresence mode="wait">
+            {selectedFile ? (
+              <motion.div
+                key="file-selected"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+                className="flex items-center gap-4 px-6 py-3 bg-primary/5 rounded-lg border border-primary/20"
+              >
+                <FileText className="w-6 h-6 text-primary flex-shrink-0" />
+                <div className="text-left flex-1">
+                  <p className="font-medium text-foreground">{selectedFile.name}</p>
+                  <p className="text-sm text-neutral-500">
+                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedFile(null);
+                  }}
+                  className="p-1 hover:bg-neutral-200 rounded transition-colors"
+                >
+                  <X className="w-4 h-4 text-neutral-600" />
+                </button>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="no-file"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-2"
+              >
+                <p className="text-xl font-medium text-foreground">
+                  Drop your newspaper PDF here
                 </p>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <p className="text-xl font-medium text-foreground">
-                Drop your newspaper PDF here
-              </p>
-              <p className="text-sm text-neutral-500">
-                or click to browse files
-              </p>
-            </div>
-          )}
+                <p className="text-sm text-neutral-500">
+                  or click to browse files
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {selectedFile && (
-            <button
+            <motion.button
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={(e) => {
                 e.stopPropagation();
                 handleUpload();
               }}
               disabled={isProcessing}
-              className="px-8 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-all shadow-sm hover:shadow-lifted disabled:opacity-50 animate-fade-in"
+              className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-all duration-300 shadow-sm hover:shadow-lifted disabled:opacity-50"
             >
               Process PDF
-            </button>
+            </motion.button>
           )}
 
           <p className="text-xs text-neutral-400 pt-4">
@@ -146,6 +184,6 @@ export function UploadZone({ onFileSelect, isProcessing }: UploadZoneProps) {
           </p>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

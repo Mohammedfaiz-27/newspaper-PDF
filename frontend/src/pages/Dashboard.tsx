@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { Filter, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Filter, X, Hash, FileText } from "lucide-react";
 import { SearchBar } from "../components/SearchBar";
 import { KeywordChip } from "../components/KeywordChip";
 import { ArticleCard } from "../components/ArticleCard";
@@ -71,18 +72,35 @@ export function Dashboard({ result }: DashboardProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-neutral-50 to-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-neutral-50 to-background">
       {/* Sticky Header */}
-      <header className="sticky top-0 z-40 w-full bg-background/80 backdrop-blur-lg border-b border-border">
+      <motion.header
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="sticky top-0 z-40 w-full bg-background/90 backdrop-blur-lg border-b border-border shadow-sm"
+      >
         <div className="max-w-7xl mx-auto px-6 py-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-foreground">
-                Article Explorer
+              <h1 className="text-4xl md:text-5xl font-serif font-bold text-foreground">
+                Extracted Articles
               </h1>
-              <p className="text-neutral-600 mt-1">
-                {result.articles.length} articles across {result.pages} pages
-              </p>
+              <div className="flex items-center gap-3 mt-2 text-neutral-600">
+                <div className="flex items-center gap-1.5">
+                  <FileText className="w-4 h-4" />
+                  <span className="font-medium">{result.articles.length}</span>
+                  <span>{result.articles.length === 1 ? "article" : "articles"}</span>
+                </div>
+                <span>•</span>
+                <div className="flex items-center gap-1.5">
+                  <Hash className="w-4 h-4" />
+                  <span className="font-medium">{result.keywords_summary.length}</span>
+                  <span>keywords</span>
+                </div>
+                <span>•</span>
+                <span>{result.pages} {result.pages === 1 ? "page" : "pages"}</span>
+              </div>
             </div>
           </div>
 
@@ -92,38 +110,57 @@ export function Dashboard({ result }: DashboardProps) {
             placeholder="Search articles by keyword or topic..."
           />
         </div>
-      </header>
+      </motion.header>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-12 space-y-12">
         {/* Keyword Filter Section */}
         {result.keywords_summary.length > 0 && (
-          <section className="space-y-4 animate-fade-in">
-            <div className="flex items-center justify-between">
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="space-y-4"
+          >
+            <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-3">
-                <Filter className="w-5 h-5 text-neutral-600" />
-                <h2 className="text-2xl font-bold text-foreground">
-                  Filter by Keyword
-                </h2>
+                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <Filter className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-serif font-bold text-foreground">
+                    Filter by Keyword
+                  </h2>
+                  <p className="text-sm text-neutral-600">
+                    Click a keyword to filter articles
+                  </p>
+                </div>
               </div>
 
-              {selectedKeyword && (
-                <button
-                  onClick={() => setSelectedKeyword(null)}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-neutral-600 hover:text-foreground transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                  Clear filter
-                </button>
-              )}
+              <AnimatePresence>
+                {selectedKeyword && (
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.2 }}
+                    onClick={() => setSelectedKeyword(null)}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-neutral-600 hover:text-foreground bg-white rounded-lg border border-border hover:shadow-card transition-all duration-200"
+                  >
+                    <X className="w-4 h-4" />
+                    Clear filter
+                  </motion.button>
+                )}
+              </AnimatePresence>
             </div>
 
             <div className="flex flex-wrap gap-3">
               {result.keywords_summary.slice(0, 12).map((kw, index) => (
-                <div
+                <motion.div
                   key={index}
-                  className="animate-fade-in"
-                  style={{ animationDelay: `${index * 30}ms` }}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3, delay: 0.2 + index * 0.03 }}
                 >
                   <KeywordChip
                     keyword={kw.keyword}
@@ -131,15 +168,20 @@ export function Dashboard({ result }: DashboardProps) {
                     isSelected={selectedKeyword === kw.keyword}
                     onClick={() => handleKeywordClick(kw.keyword)}
                   />
-                </div>
+                </motion.div>
               ))}
             </div>
-          </section>
+          </motion.section>
         )}
 
         {/* Results Count */}
-        <div className="flex items-center gap-2 text-neutral-600">
-          <span className="font-medium text-foreground">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.3 }}
+          className="flex items-center gap-2 text-neutral-600 text-sm"
+        >
+          <span className="font-semibold text-foreground text-lg">
             {filteredArticles.length}
           </span>
           <span>
@@ -153,7 +195,7 @@ export function Dashboard({ result }: DashboardProps) {
               </span>
             )}
           </span>
-        </div>
+        </motion.div>
 
         {/* Articles Grid */}
         {filteredArticles.length > 0 ? (
@@ -169,17 +211,22 @@ export function Dashboard({ result }: DashboardProps) {
             ))}
           </section>
         ) : (
-          <div className="text-center py-24 animate-fade-in">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-neutral-100 mb-4">
-              <Filter className="w-10 h-10 text-neutral-400" />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="text-center py-24"
+          >
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-4">
+              <Filter className="w-10 h-10 text-primary" />
             </div>
-            <h3 className="text-xl font-serif font-semibold text-foreground mb-2">
+            <h3 className="text-2xl font-serif font-semibold text-foreground mb-2">
               No articles found
             </h3>
             <p className="text-neutral-600">
               Try adjusting your search or filter criteria
             </p>
-          </div>
+          </motion.div>
         )}
       </main>
 

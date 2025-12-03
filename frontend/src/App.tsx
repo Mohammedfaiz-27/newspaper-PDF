@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { UploadZone } from "./components/UploadZone";
+import { motion, AnimatePresence } from "framer-motion";
+import { HomePage } from "./components/HomePage";
 import { ProcessingSteps } from "./components/ProcessingSteps";
 import { Dashboard } from "./pages/Dashboard";
 import { uploadPDF, getJobStatus, getJobResult } from "./lib/api";
@@ -80,40 +81,44 @@ function App() {
 
   return (
     <div className="min-h-screen">
-      {appState === "upload" && (
-        <div className="min-h-screen bg-gradient-to-br from-background via-neutral-50 to-background flex flex-col">
-          {/* Header */}
-          <header className="w-full px-6 py-12 text-center">
-            <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-4">
-              Newspaper PDF Processor
-            </h1>
-            <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
-              Extract, analyze, and search news articles from PDF newspapers
-              using advanced AI-driven NLP
-            </p>
-          </header>
+      <AnimatePresence mode="wait">
+        {appState === "upload" && (
+          <motion.div
+            key="upload"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <HomePage onFileSelect={handleFileSelect} isProcessing={false} />
+          </motion.div>
+        )}
 
-          {/* Upload Zone */}
-          <main className="flex-1 flex items-center justify-center px-6 pb-12">
-            <UploadZone onFileSelect={handleFileSelect} isProcessing={false} />
-          </main>
+        {appState === "processing" && (
+          <motion.div
+            key="processing"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="min-h-screen bg-gradient-to-br from-background via-neutral-50 to-background flex items-center justify-center px-6 py-12"
+          >
+            <ProcessingSteps currentStep={currentStep} progress={progress} />
+          </motion.div>
+        )}
 
-          {/* Footer */}
-          <footer className="w-full px-6 py-8 text-center text-sm text-neutral-500 border-t border-border">
-            Powered by FastAPI, React, and AI-driven NLP
-          </footer>
-        </div>
-      )}
-
-      {appState === "processing" && (
-        <div className="min-h-screen bg-gradient-to-br from-background via-neutral-50 to-background flex items-center justify-center px-6 py-12">
-          <ProcessingSteps currentStep={currentStep} progress={progress} />
-        </div>
-      )}
-
-      {appState === "dashboard" && result && (
-        <Dashboard result={result} />
-      )}
+        {appState === "dashboard" && result && (
+          <motion.div
+            key="dashboard"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Dashboard result={result} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

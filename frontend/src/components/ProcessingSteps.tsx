@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import {
   Upload,
   FileText,
@@ -9,6 +10,7 @@ import {
   Loader2,
   Circle,
 } from "lucide-react";
+import { cn } from "../lib/utils";
 
 interface ProcessingStepsProps {
   currentStep: string;
@@ -69,30 +71,47 @@ export function ProcessingSteps({ currentStep, progress }: ProcessingStepsProps)
   }, [currentStep, progress]);
 
   return (
-    <div className="w-full max-w-2xl mx-auto bg-card rounded-xl shadow-card p-8 animate-fade-in-scale">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-foreground mb-2">
-          Processing Your PDF
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4 }}
+      className="w-full max-w-2xl mx-auto bg-card rounded-xl shadow-card p-8 md:p-10 border border-border"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+        className="mb-8"
+      >
+        <h2 className="text-3xl md:text-4xl font-serif font-bold text-foreground mb-2">
+          Processing Your Document
         </h2>
         <p className="text-neutral-600">{currentStep}</p>
-      </div>
+      </motion.div>
 
       {/* Progress Bar */}
-      <div className="mb-8">
-        <div className="flex justify-between text-sm text-neutral-600 mb-2">
-          <span>Progress</span>
-          <span className="font-medium">{progress}%</span>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+        className="mb-10"
+      >
+        <div className="flex justify-between text-sm text-neutral-600 mb-3">
+          <span className="font-medium">Progress</span>
+          <span className="font-semibold text-primary">{progress}%</span>
         </div>
-        <div className="w-full h-2 bg-neutral-200 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-primary to-teal-medium transition-all duration-500 ease-out origin-left"
-            style={{ width: `${progress}%` }}
+        <div className="w-full h-2.5 bg-neutral-200 rounded-full overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+            className="h-full bg-gradient-to-r from-primary via-teal-medium to-primary rounded-full"
           />
         </div>
-      </div>
+      </motion.div>
 
       {/* Steps */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         {STEPS.map((step, index) => {
           const isCompleted = index < currentIndex;
           const isCurrent = index === currentIndex;
@@ -100,31 +119,25 @@ export function ProcessingSteps({ currentStep, progress }: ProcessingStepsProps)
           const Icon = step.icon;
 
           return (
-            <div
+            <motion.div
               key={step.id}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: 0.3 + index * 0.05 }}
               className={cn(
-                "flex items-center space-x-4 transition-all duration-300",
-                isCurrent && "scale-105"
+                "flex items-center space-x-4 p-3 rounded-lg transition-all duration-300",
+                isCurrent && "bg-primary/5 scale-[1.02]"
               )}
-              style={{
-                animationDelay: `${index * 50}ms`,
-              }}
             >
-              <div
+              <motion.div
+                animate={isCurrent ? { scale: [1, 1.1, 1] } : { scale: 1 }}
+                transition={{ duration: 2, repeat: isCurrent ? Infinity : 0 }}
                 className={cn(
-                  "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all",
-                  isCompleted && "bg-teal-medium",
-                  isCurrent && "bg-primary",
-                  isPending && "bg-neutral-200",
-                  isCurrent && "shadow-lifted animate-shimmer"
+                  "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
+                  isCompleted && "bg-primary shadow-sm",
+                  isCurrent && "bg-primary shadow-md",
+                  isPending && "bg-neutral-200"
                 )}
-                style={{
-                  backgroundImage:
-                    isCurrent
-                      ? "linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(var(--primary)) 40%, hsl(var(--teal-medium)) 50%, hsl(var(--primary)) 60%, hsl(var(--primary)) 100%)"
-                      : undefined,
-                  backgroundSize: isCurrent ? "200% 100%" : undefined,
-                }}
               >
                 {isCompleted ? (
                   <CheckCircle2 className="w-5 h-5 text-white" />
@@ -133,14 +146,14 @@ export function ProcessingSteps({ currentStep, progress }: ProcessingStepsProps)
                 ) : (
                   <Circle className="w-3 h-3 text-neutral-400" />
                 )}
-              </div>
+              </motion.div>
 
               <div className="flex-1">
                 <p
                   className={cn(
-                    "font-medium transition-colors",
-                    isCompleted && "text-teal-dark",
-                    isCurrent && "text-primary",
+                    "font-medium transition-colors duration-300",
+                    isCompleted && "text-primary",
+                    isCurrent && "text-primary font-semibold",
                     isPending && "text-neutral-400"
                   )}
                 >
@@ -150,25 +163,26 @@ export function ProcessingSteps({ currentStep, progress }: ProcessingStepsProps)
 
               <Icon
                 className={cn(
-                  "w-5 h-5 transition-colors",
-                  isCompleted && "text-teal-dark",
+                  "w-5 h-5 transition-all duration-300",
+                  isCompleted && "text-primary",
                   isCurrent && "text-primary",
                   isPending && "text-neutral-300"
                 )}
               />
-            </div>
+            </motion.div>
           );
         })}
       </div>
 
-      <div className="mt-8 flex items-center justify-center space-x-2 text-sm text-neutral-500">
-        <Loader2 className="w-4 h-4 animate-spin" />
-        <span>This may take a few moments...</span>
-      </div>
-    </div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3, delay: 0.6 }}
+        className="mt-8 pt-6 border-t border-border flex items-center justify-center space-x-2 text-sm text-neutral-500"
+      >
+        <Loader2 className="w-4 h-4 animate-spin text-primary" />
+        <span>This usually takes less than a minute</span>
+      </motion.div>
+    </motion.div>
   );
-}
-
-function cn(...classes: (string | boolean | undefined)[]) {
-  return classes.filter(Boolean).join(" ");
 }
