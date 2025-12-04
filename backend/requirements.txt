@@ -13,8 +13,8 @@ opencv-python==4.9.0.80
 numpy==1.26.3
 pandas==2.1.4
 spacy==3.7.2
-keybert==0.8.4
-sentence-transformers==2.2.2
+sentence-transformers==3.0.1
+keybert==0.8.5
 scikit-learn==1.4.0
 aiofiles==23.2.1
 python-jose[cryptography]==3.3.0
