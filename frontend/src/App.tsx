@@ -12,7 +12,6 @@ function App() {
   const [currentStep, setCurrentStep] = useState("");
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<ProcessResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   // Poll for job status
   useEffect(() => {
@@ -34,12 +33,11 @@ function App() {
             setAppState("dashboard");
           } catch (err) {
             console.error("Error fetching result:", err);
-            setError("Failed to fetch results. Please try again.");
+            alert("Failed to fetch results. Please try again.");
             setAppState("upload");
           }
         } else if (status.status === "failed") {
           clearInterval(pollInterval);
-          setError(status.error || "Processing failed");
           setAppState("upload");
           alert(`Processing failed: ${status.error || "Unknown error"}`);
         }
@@ -56,27 +54,14 @@ function App() {
       setAppState("processing");
       setProgress(0);
       setCurrentStep("Uploading...");
-      setError(null);
 
       const response = await uploadPDF(file);
       setJobId(response.job_id);
     } catch (err: any) {
       console.error("Upload error:", err);
-      setError(
-        err.response?.data?.detail || "Failed to upload file. Please try again."
-      );
       setAppState("upload");
       alert(`Upload failed: ${err.response?.data?.detail || err.message}`);
     }
-  };
-
-  const handleReset = () => {
-    setAppState("upload");
-    setJobId(null);
-    setCurrentStep("");
-    setProgress(0);
-    setResult(null);
-    setError(null);
   };
 
   return (
